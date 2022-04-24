@@ -1,11 +1,13 @@
 export class _2048 {
     constructor() {
+        this.loss = false;
         this.data = [
             [0, 0, 0, 0],
             [0, 0, 0, 0],
             [0, 0, 0, 0],
             [0, 0, 0, 0]
         ];
+        this.old = this.data;
         this.points = 0;
         this.steps = 0;
         this.addRand(2);
@@ -37,16 +39,15 @@ export class _2048 {
         while (result.length < 4) 
             result.unshift(0);
         game.points += points;
-        game.steps += 0.25;
         return result;
     }
 
     static mergeRowLeft = (row, game) => _2048.mergeRowRight([...row].reverse(), game).reverse();
 
-    mergeRight = () => this.data = this.data.map(row => _2048.mergeRowRight(row, this));
-    mergeLeft = () => this.data = this.data.map(row => _2048.mergeRowLeft(row, this));
-    mergeUp = () => this.data = _2048.zip(_2048.zip(this.data).map(row => _2048.mergeRowLeft(row, this)));
-    mergeDown = () => this.data = _2048.zip(_2048.zip(this.data).map(row => _2048.mergeRowRight(row, this)));
+    mergeRight = () => this.data.map(row => _2048.mergeRowRight(row, this));
+    mergeLeft = () => this.data.map(row => _2048.mergeRowLeft(row, this));
+    mergeUp = () => _2048.zip(_2048.zip(this.data).map(row => _2048.mergeRowLeft(row, this)));
+    mergeDown = () => _2048.zip(_2048.zip(this.data).map(row => _2048.mergeRowRight(row, this)));
 
     addRand(num) {
         let pos = {
@@ -59,6 +60,43 @@ export class _2048 {
                 y: Math.floor(Math.random()*4)
             };
         this.data[pos.y][pos.x] = num;
+    }
+
+    static isEqual(arr1, arr2) {
+        for (let i = 0; i < arr2.length; i++)
+            for (let j = 0; j < arr2[0].length; j++)
+                if (arr1[i][j] != arr2[i][j])
+                    return false;
+        return true;
+    }
+
+    move(dir) {
+        if(this.loss)
+            return;
+        this.steps++;
+        if (!isEqual(this.data, this.old))
+            this.addRand(Math.round(Math.random()) ? 2 : 4);
+        this.old = this.data;
+        var use;
+        dir = dir.map((el, i) => [el , i+1]).sort((a, b) => b - a)[0][1];
+        if (dir == 1) {
+            this.data = this.mergeUp();
+            use = this.mergeRight;
+        } else if (dir == 2) {
+            this.data = this.mergeLeft();
+            use = this.mergeUp;
+        } else if (dir == 3) {
+            this.data = this.mergeRight();
+            use = this.mergeUp;
+        } else if (dir == 4) {
+            this.data = this.mergeDown();
+            use = this.mergeRight;
+        }
+        if (isEqual(this.old, this.data)) {
+            use();
+            if (isEqual(this.old, this.data)) //I'm not insane i swear
+                return this.loss = true;
+        }
     }
 
     toString() {
