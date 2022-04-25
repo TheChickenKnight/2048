@@ -33,11 +33,7 @@ while(!bestBot.game.win) {
     for (var j = 0; j < 10000; j++)
         bots.push(bestBot.fromParent());
     for (let bot of bots) {
-        while(!bot.game.win && !bot.game.loss) {
-            let data = bot.game.data;
+        while(!bot.game.win && !bot.game.loss && bot.rep < 100)
             bot.turn();
-            if (_2048.isEqual(data, bot.game.data))
-                break;
-        }
     }
 }

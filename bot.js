@@ -4,8 +4,10 @@ import { _2048 } from "./2048.js";
 
 export default class bot {
     constructor() {
-        this.brain = new architect.Random(9, 6, 4, {});
+        this.rep = 1;
+        this.brain = new architect.Random(18, 6, 4, {});
         this.game = new _2048();
+        this.prev = [10, 0];
     }
 
     static flatten(twoD) {
@@ -16,8 +18,16 @@ export default class bot {
         return res;
     }
 
+    static choice = dir => dir.map((el, i) => [el , i+1]).sort((a, b) => b[0] - a[0])[0][1];
+
     turn() {
-        this.game.move(this.brain.activate(bot.flatten(this.game.data)));
+        let choice = this.brain.activate(bot.flatten(this.game.data).concat([this.rep, this.game.steps]));
+        if(bot.choice(this.prev) == bot.choice(choice))
+            this.rep+=1;
+        else
+            this.rep = 0;
+        this.prev = choice;
+        this.game.move(choice.concat([this.rep, this.game.steps]));
     }
 
     fromParent() {

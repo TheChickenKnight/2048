@@ -1,7 +1,7 @@
 export class _2048 {
     constructor() {
+        this.moves = 0;
         this.loss = false;
-        this.win = false;
         this.data = [
             [0, 0, 0, 0],
             [0, 0, 0, 0],
@@ -43,14 +43,6 @@ export class _2048 {
         return result;
     }
 
-    static isEqual(arr1, arr2) {
-        for (let i = 0; i < arr2.length; i++)
-            for (let j = 0; j < arr2[0].length; j++)
-                if (arr1[i][j] != arr2[i][j])
-                    return false;
-        return true;
-    }
-
     static mergeRowLeft = (row, game) => _2048.mergeRowRight([...row].reverse(), game).reverse();
 
     mergeRight = () => this.data.map(row => _2048.mergeRowRight(row, this));
@@ -71,42 +63,47 @@ export class _2048 {
         this.data[pos.y][pos.x] = num;
     }
 
+    static isEqual(arr1, arr2) {
+        for (let i = 0; i < arr2.length; i++)
+            for (let j = 0; j < arr2[0].length; j++)
+                if (arr1[i][j] != arr2[i][j])
+                    return false;
+        return true;
+    }
+
     move(dir) {
-        if(this.loss || this.win)
+        if(this.loss)
             return;
         this.steps++;
         if (!_2048.isEqual(this.data, this.old))
             this.addRand(Math.round(Math.random()) ? 2 : 4);
         this.old = this.data;
         var use;
-        dir = dir.map((el, i) => [el , i+1]).sort((a, b) => b[0] - a[0])[0][1];
+        dir = dir.map((el, i) => [el , i+1]).sort((a, b) => b - a)[0][1];
         if (dir == 1) {
             this.data = this.mergeUp();
             use = [this.mergeRight, this.mergeDown, this.mergeLeft];
         } else if (dir == 2) {
             this.data = this.mergeLeft();
-            use = [this.mergeUp, this.mergeRight, this.mergeDown];
+            use = [this.mergeRight, this.mergeDown, this.mergeUp];
         } else if (dir == 3) {
             this.data = this.mergeRight();
-            use = [this.mergeUp, this.mergeDown, this.mergeLeft];
+            use = [this.mergeLeft, this.mergeUp, this.mergeDown];
         } else if (dir == 4) {
             this.data = this.mergeDown();
-            use = [this.mergeRight, this.mergeLeft, this.mergeUp];
+            use = [this.mergeUp, this.mergeLeft, this.mergeRight];
         }
-        if (this.steps >= 520) {
-            for (let i = 0; i < this.data.length; i++)
-                for (let j = 0; j < this.data[0].length; j++)
-                    if (this.data[i][j] == 2048) {
-                        this.points += 4096;
+        if (this.steps > 500)
+            for (let row of this.data)
+                for (let el of row)
+                    if (el == 2048)
                         return this.win = true;
-                    }
-        }
         if (_2048.isEqual(this.old, this.data)) {
             for (let i = 0; i < use.length; i++) {
-                if (!_2048.isEqual(this.old, use[i]()))
+                if (_2048.isEqual(this.old, use[i]()))
                     return;
             }
-            this.points -= 4096;
+            //this.points -= 4096;
             return this.loss = true;
         }
     }
