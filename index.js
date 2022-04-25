@@ -1,27 +1,43 @@
-import {_2048} from "./2048.js"
+import { _2048 } from "./2048.js";
+import bot from "./bot.js";
+import fs from "fs";
 
-let game = new _2048();
-let olddata = game.data;
-for (let i = 0; i < 10; i++)
-    setTimeout(() => {
-        if (!isEqual(olddata, game.data))
-            game.addRand(Math.round(Math.random()) ? 2 : 4);
-        olddata = game.data;
-        if (i % 2 == 0) {
-            game.mergeDown();
-            console.log("Down");
-        }
-        else {
-            game.mergeLeft();
-            console.log("Left");
-        }
-        console.log(game.toString() + '\n__________');
-    }, i * 1000);
+let bots = [];
 
-function isEqual(arr1, arr2) {
-    for (let i = 0; i < arr2.length; i++)
-        for (let j = 0; j < arr2[0].length; j++)
-            if (arr1[i][j] != arr2[i][j])
-                return false;
-    return true;
+for (let i = 0; i < 10000; i++)
+    bots.push(new bot());
+
+for (let bot of bots) {
+    while(!bot.game.win && !bot.game.loss) {
+        let data = bot.game.data;
+        bot.turn();
+        if (_2048.isEqual(data, bot.game.data))
+            break;
+    }
+}
+
+let bestBot = {
+    game: {
+        win: false
+    }
+};
+
+let count = 0;
+while(!bestBot.game.win) {
+    count++;
+    console.log("_______________________\nEpoch " + count + ":");
+    bestBot = bots.reduce((b, a) => b.game.points > a.game.points ? b : a);
+    console.log(bestBot.game.toString(), "| Points: ", bestBot.game.points, "| Steps: ", bestBot.game.steps);
+    fs.writeFileSync('log.txt', "Epoch " + count + "\n" + bestBot.game.toString() + "\nPoints: " + bestBot.game.points + "\nSteps: " + bestBot.game.steps + "\nWin/Loss?: " + (bestBot.game.win ? "Win" : (bestBot.game.loss ? "Loss" : "")));
+    bots = [];
+    for (var j = 0; j < 10000; j++)
+        bots.push(bestBot.fromParent());
+    for (let bot of bots) {
+        while(!bot.game.win && !bot.game.loss) {
+            let data = bot.game.data;
+            bot.turn();
+            if (_2048.isEqual(data, bot.game.data))
+                break;
+        }
+    }
 }

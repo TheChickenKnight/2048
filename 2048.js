@@ -1,6 +1,7 @@
 export class _2048 {
     constructor() {
         this.loss = false;
+        this.win = false;
         this.data = [
             [0, 0, 0, 0],
             [0, 0, 0, 0],
@@ -42,6 +43,14 @@ export class _2048 {
         return result;
     }
 
+    static isEqual(arr1, arr2) {
+        for (let i = 0; i < arr2.length; i++)
+            for (let j = 0; j < arr2[0].length; j++)
+                if (arr1[i][j] != arr2[i][j])
+                    return false;
+        return true;
+    }
+
     static mergeRowLeft = (row, game) => _2048.mergeRowRight([...row].reverse(), game).reverse();
 
     mergeRight = () => this.data.map(row => _2048.mergeRowRight(row, this));
@@ -62,40 +71,43 @@ export class _2048 {
         this.data[pos.y][pos.x] = num;
     }
 
-    static isEqual(arr1, arr2) {
-        for (let i = 0; i < arr2.length; i++)
-            for (let j = 0; j < arr2[0].length; j++)
-                if (arr1[i][j] != arr2[i][j])
-                    return false;
-        return true;
-    }
-
     move(dir) {
-        if(this.loss)
+        if(this.loss || this.win)
             return;
         this.steps++;
-        if (!isEqual(this.data, this.old))
+        if (!_2048.isEqual(this.data, this.old))
             this.addRand(Math.round(Math.random()) ? 2 : 4);
         this.old = this.data;
         var use;
-        dir = dir.map((el, i) => [el , i+1]).sort((a, b) => b - a)[0][1];
+        dir = dir.map((el, i) => [el , i+1]).sort((a, b) => b[0] - a[0])[0][1];
         if (dir == 1) {
             this.data = this.mergeUp();
-            use = this.mergeRight;
+            use = [this.mergeRight, this.mergeDown, this.mergeLeft];
         } else if (dir == 2) {
             this.data = this.mergeLeft();
-            use = this.mergeUp;
+            use = [this.mergeUp, this.mergeRight, this.mergeDown];
         } else if (dir == 3) {
             this.data = this.mergeRight();
-            use = this.mergeUp;
+            use = [this.mergeUp, this.mergeDown, this.mergeLeft];
         } else if (dir == 4) {
             this.data = this.mergeDown();
-            use = this.mergeRight;
+            use = [this.mergeRight, this.mergeLeft, this.mergeUp];
         }
-        if (isEqual(this.old, this.data)) {
-            use();
-            if (isEqual(this.old, this.data)) //I'm not insane i swear
-                return this.loss = true;
+        if (this.steps >= 520) {
+            for (let i = 0; i < this.data.length; i++)
+                for (let j = 0; j < this.data[0].length; j++)
+                    if (this.data[i][j] == 2048) {
+                        this.points += 4096;
+                        return this.win = true;
+                    }
+        }
+        if (_2048.isEqual(this.old, this.data)) {
+            for (let i = 0; i < use.length; i++) {
+                if (!_2048.isEqual(this.old, use[i]()))
+                    return;
+            }
+            this.points -= 4096;
+            return this.loss = true;
         }
     }
 
