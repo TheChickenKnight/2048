@@ -1,6 +1,7 @@
 export class _2048 {
     constructor() {
         this.moves = 0;
+        this.rep = 0;
         this.loss = false;
         this.data = [
             [0, 0, 0, 0],
@@ -13,6 +14,8 @@ export class _2048 {
         this.steps = 0;
         this.addRand(2);
         this.addRand(Math.round(Math.random()) ? 2 : 4);
+        this.highestBlock = 2;
+        this.history = [this.data];
     }
 
     static peek = array => array[array.length - 1];
@@ -75,37 +78,53 @@ export class _2048 {
         if(this.loss)
             return;
         this.steps++;
-        if (!_2048.isEqual(this.data, this.old))
+        if (!_2048.isEqual(this.data, this.old)) {
             this.addRand(Math.round(Math.random()) ? 2 : 4);
-        this.old = this.data;
-        var use;
-        dir = dir.map((el, i) => [el , i+1]).sort((a, b) => b - a)[0][1];
-        if (dir == 1) {
-            this.data = this.mergeUp();
-            use = [this.mergeRight, this.mergeDown, this.mergeLeft];
-        } else if (dir == 2) {
-            this.data = this.mergeLeft();
-            use = [this.mergeRight, this.mergeDown, this.mergeUp];
-        } else if (dir == 3) {
-            this.data = this.mergeRight();
-            use = [this.mergeLeft, this.mergeUp, this.mergeDown];
-        } else if (dir == 4) {
-            this.data = this.mergeDown();
-            use = [this.mergeUp, this.mergeLeft, this.mergeRight];
         }
+        this.old = this.data;
+        dir = dir.map((el, i) => [el , i+1]).sort((a, b) => b - a)[0][1];
+        if (dir == 1)
+            this.data = this.mergeUp();
+        else if (dir == 2)
+            this.data = this.mergeLeft();
+        else if (dir == 3)
+            this.data = this.mergeRight();
+        else if (dir == 4)
+            this.data = this.mergeDown();
+        for (let row of this.data)
+            for (let el of row)
+                if (el > this.highestBlock)
+                    this.highestBlock = el;
+        this.history.push(this.data);
+        this.history.shift();
+        let isEqual = false;
+        for (let part of this.history) {
+            if (_2048.isEqual(part, this.data))
+                isEqual = true;
+        }
+        if (isEqual)
+            this.rep++;
+        else  
+            this.rep = 0;
         if (this.steps > 500)
             for (let row of this.data)
                 for (let el of row)
-                    if (el == 2048)
-                        return this.win = true;
-        if (_2048.isEqual(this.old, this.data)) {
-            for (let i = 0; i < use.length; i++) {
-                if (_2048.isEqual(this.old, use[i]()))
+                    if (el == 2048) {
+                        this.win = true;
+                        return;
+                    }
+        for (
+            let func of [
+                this.mergeDown, 
+                this.mergeLeft, 
+                this.mergeRight, 
+                this.mergeUp
+            ]
+            )
+                if (!_2048.isEqual(this.old, func()))
                     return;
-            }
-            //this.points -= 4096;
-            return this.loss = true;
-        }
+        //this.points -= 4096;
+        return this.loss = true;
     }
 
     toString() {

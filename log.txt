@@ -1,8 +1,8 @@
-Epoch 376
-2 16 16 16
-16 8 0 8
-4 4 0 2
+Epoch 3740
+16 16 2 16
+0 8 16 4
+0 0 2 0
 0 0 0 0
-Points: 276
-Steps: 28
-Win/Loss?: Loss
+Points: 224
+Steps: 99
+Win/Loss?: 
